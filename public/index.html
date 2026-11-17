@@ -248,10 +248,12 @@
   }
   function renderRank(rows){
     if (!loaded){ $("rank").innerHTML = ""; return; }
-    const list = rows.map(r=>({r, lv: level(r)})).sort((a,b)=> b.lv.score - a.lv.score || a.r.d - b.r.d);
+    // Primero por jugabilidad (categoría) y dentro de cada una por fecha del calendario
+    const ORDER = {alta:0, buena:1, abierta:2, floja:3, cancel:4};
+    const list = rows.map(r=>({r, lv: level(r)})).sort((a,b)=> ORDER[a.lv.cls] - ORDER[b.lv.cls] || a.r.d - b.r.d);
     // Siempre se ven los mejores y los que están en riesgo; los "sin datos" del medio se pliegan
     const shown = rankAll ? list : list.filter((x,i)=> i < 5 || x.lv.cls==="cancel" || x.lv.cls==="floja");
-    $("rank").innerHTML = `<h2>Ranking de viernes</h2><p class="sub">Ordenados de más a menos chances de que se juegue. Tocá uno para ir a ese viernes.</p>` +
+    $("rank").innerHTML = `<h2>Ranking de viernes</h2><p class="sub">Ordenados por chances de que se juegue y, dentro de cada grupo, por fecha. Tocá uno para ir a ese viernes.</p>` +
       shown.map(({r,lv})=>`<div class="rrow lv-${lv.cls}" data-k="${r.k}"><span class="rpos">${list.findIndex(x=>x.r===r)+1}</span><span class="rdate">Viernes ${r.d.getDate()}<small>${MONTHS[r.d.getMonth()]} · ${r.ok} sí · ${r.maybe} duda · ${r.no} no</small></span><span class="pill">${lv.label}</span><span></span><span class="rbar"><i style="width:${chance(r,lv)}%"></i></span></div>`).join("") +
       (list.length > shown.length || rankAll ? `<button class="rmore" id="rankToggle">${rankAll ? "Ver menos" : `Ver los ${list.length} viernes`}</button>` : "");
   }
