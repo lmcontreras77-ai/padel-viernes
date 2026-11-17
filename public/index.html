@@ -87,13 +87,13 @@
   .guestform button.ghost{background:transparent;color:var(--muted)}
   .rank h2{font-size:18px;font-weight:800;margin:0 0 4px;letter-spacing:-.01em}
   .rank .sub{font-size:13px;color:var(--muted);margin:0 0 12px}
-  .rrow{display:grid;grid-template-columns:28px 1fr auto;gap:4px 12px;align-items:center;padding:9px 6px;border-radius:10px;cursor:pointer;border-top:1px solid #eef1f5}
+  .rrow{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:9px 6px;border-radius:10px;cursor:pointer;border-top:1px solid #eef1f5}
   .rrow:first-of-type{border-top:none}
   .rrow:hover{background:#f6f8fb}
   .rpos{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--muted);text-align:center}
   .rdate{font-weight:700;font-size:15px}
   .rdate small{font-weight:400;color:var(--muted);font-size:12px;margin-left:6px}
-  .rbar{grid-column:2/4;height:6px;border-radius:99px;background:#eef1f5;overflow:hidden}
+  .rbar{grid-column:1/3;height:6px;border-radius:99px;background:#eef1f5;overflow:hidden}
   .rbar i{display:block;height:100%;border-radius:99px}
   .pill{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
   .lv-alta .pill{background:#e3f6ec;color:#167a50} .lv-alta .rbar i{background:var(--ok)}
@@ -249,17 +249,12 @@
   }
   function renderRank(rows){
     if (!loaded){ $("rank").innerHTML = ""; return; }
-    // Primero por jugabilidad (categoría) y dentro de cada una por fecha del calendario
-    const ORDER = {alta:0, buena:1, abierta:2, floja:3, cancel:4};
-    const list = rows.map(r=>({r, lv: level(r)})).sort((a,b)=> ORDER[a.lv.cls] - ORDER[b.lv.cls] || a.r.d - b.r.d);
-    // Siempre se ven los mejores y los que están en riesgo; los "sin datos" del medio se pliegan
-    const shown = rankAll ? list : list.filter((x,i)=> i < 5 || x.lv.cls==="cancel" || x.lv.cls==="floja");
-    $("rank").innerHTML = `<h2>Ranking de viernes</h2><p class="sub">Ordenados por chances de que se juegue y, dentro de cada grupo, por fecha. Tocá uno para ir a ese viernes.</p>` +
-      shown.map(({r,lv})=>`<div class="rrow lv-${lv.cls}" data-k="${r.k}"><span class="rpos">${list.findIndex(x=>x.r===r)+1}</span><span class="rdate">Viernes ${r.d.getDate()}<small>${MONTHS[r.d.getMonth()]} · ${r.ok} sí · ${r.maybe} duda · ${r.no} no</small></span><span class="pill">${lv.label}</span><span></span><span class="rbar"><i style="width:${chance(r,lv)}%"></i></span></div>`).join("") +
-      (list.length > shown.length || rankAll ? `<button class="rmore" id="rankToggle">${rankAll ? "Ver menos" : `Ver los ${list.length} viernes`}</button>` : "");
+    // En orden de calendario, cada viernes con su chance
+    const list = rows.map(r=>({r, lv: level(r)}));
+    $("rank").innerHTML = `<h2>Chances por viernes</h2><p class="sub">En orden de fecha, con las chances de que se juegue cada uno. Tocá uno para ir a ese viernes.</p>` +
+      list.map(({r,lv})=>`<div class="rrow lv-${lv.cls}" data-k="${r.k}"><span class="rdate">Viernes ${r.d.getDate()}<small>${MONTHS[r.d.getMonth()]} · ${r.ok} sí · ${r.maybe} duda · ${r.no} no</small></span><span class="pill">${lv.label}</span><span class="rbar"><i style="width:${chance(r,lv)}%"></i></span></div>`).join("");
   }
   $("rank").addEventListener("click", e=>{
-    if (e.target.id==="rankToggle"){ rankAll=!rankAll; render(); return; }
     const row = e.target.closest(".rrow"); if (!row) return;
     const card = $("v-"+row.dataset.k); if (!card) return;
     card.scrollIntoView({behavior:"smooth", block:"center"});
