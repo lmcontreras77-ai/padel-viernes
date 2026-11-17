@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pádel de los viernes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --court:#1d4e89; --court-deep:#123462; --ball:#d9f24f; --paper:#f4f6f1; --ink:#14213d;
+    --ok:#22a06b; --maybe:#f2a51a; --no:#e5484d; --none:#c9cfd8; --muted:#5b6b82;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Bricolage Grotesque",system-ui,sans-serif;background:var(--paper);color:var(--ink)}
+  header{background:var(--court);color:#fff;padding:28px 20px 70px;position:relative;overflow:hidden}
+  header::before,header::after{content:"";position:absolute;border:2px solid rgba(255,255,255,.18)}
+  header::before{left:50%;top:0;bottom:0;width:0;border-width:0 0 0 2px}
+  header::after{left:12%;right:12%;top:38%;height:0;border-width:2px 0 0 0}
+  .wrap{max-width:820px;margin:0 auto;position:relative;z-index:1}
+  h1{font-size:clamp(30px,6vw,46px);font-weight:800;margin:0;letter-spacing:-.02em;display:flex;align-items:center;gap:12px}
+  .ball{width:.8em;height:.8em;border-radius:50%;background:var(--ball);box-shadow:inset -4px -4px 0 rgba(0,0,0,.12);flex:none}
+  header p{margin:8px 0 0;opacity:.85;font-size:16px}
+  main{margin-top:-46px;padding:0 14px 60px}
+  .panel{background:#fff;border-radius:16px;box-shadow:0 6px 24px rgba(18,52,98,.10);padding:16px 18px;margin-bottom:16px}
+  .legend{display:flex;flex-wrap:wrap;gap:10px 18px;font-size:14px;color:var(--muted);align-items:center}
+  .legend b{color:var(--ink);font-weight:600}
+  .dot{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:6px}
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:12px}
+  select,button,input{font:inherit}
+  .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+  .me select{padding:6px 10px;border-radius:10px;border:1px solid #d6dbe3;background:#fff;color:var(--ink)}
+  .linkbtn{background:none;border:none;color:var(--court);font-weight:600;cursor:pointer;padding:6px 0;font-size:14px}
+  .players{display:none;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:12px}
+  .players.open{display:grid}
+  .players input{padding:8px 10px;border:1px solid #d6dbe3;border-radius:10px;width:100%}
+  .month{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:22px 4px 8px}
+  .fri{background:#fff;border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 10px rgba(18,52,98,.06);border-left:6px solid var(--none)}
+  .fri.go{border-left-color:var(--ok)}
+  .fri.risk{border-left-color:var(--maybe)}
+  .fri.off{border-left-color:var(--no)}
+  .fri-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+  .date{font-size:20px;font-weight:800;letter-spacing:-.01em}
+  .date small{font-weight:400;color:var(--muted);font-size:14px;margin-left:6px}
+  .status{font-size:13px;font-weight:600;padding:4px 10px;border-radius:999px;white-space:nowrap;background:#eef1f5;color:var(--muted)}
+  .go .status{background:#e3f6ec;color:#167a50}
+  .risk .status{background:#fdf1d8;color:#9a6508}
+  .off .status{background:#fde6e7;color:#b3262b}
+  .chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  @media(min-width:620px){.chips{grid-template-columns:repeat(6,1fr)}}
+  .chip{border:2px solid transparent;border-radius:12px;padding:8px 6px;cursor:pointer;text-align:center;background:#f1f3f6;color:var(--ink);transition:transform .08s}
+  .chip:active{transform:scale(.96)}
+  .chip .n{display:block;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip .s{display:block;font-size:11px;font-family:"JetBrains Mono",monospace;margin-top:2px;opacity:.85}
+  .chip.ok{background:var(--ok);color:#fff}
+  .chip.maybe{background:var(--maybe);color:#2b1d00}
+  .chip.no{background:var(--no);color:#fff}
+  .chip.mine{border-color:var(--court-deep);box-shadow:0 0 0 2px var(--ball) inset}
+  .chip.locked{cursor:default;opacity:.92}
+  .chip.locked:active{transform:none}
+  .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 14px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+  .note{font-size:13px;color:var(--muted);margin-top:10px}
+  .lost{position:fixed;left:12px;right:12px;bottom:16px;max-width:620px;margin:0 auto;background:#fff7e0;border:2px solid var(--maybe);color:var(--ink);border-radius:14px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.15);display:none;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:14px;z-index:5}
+  .lost.show{display:flex}
+  .savebar{position:fixed;left:12px;right:12px;bottom:16px;max-width:620px;margin:0 auto;background:var(--ink);color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:none;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:14px;font-weight:600;z-index:4}
+  .savebar.show{display:flex}
+  .savebar button{border:none;border-radius:999px;padding:9px 16px;font-weight:700;cursor:pointer;background:var(--ball);color:var(--ink)}
+  .savebar button.ghost{background:transparent;color:#fff;opacity:.8}
+  .savebar button:disabled{opacity:.5;cursor:default}
+  body.hasbar .lost{bottom:86px}
+  body.hasbar main{padding-bottom:110px}
+  body.hasbar .toast{bottom:86px}
+  .chip.draft{outline:2px dashed var(--court);outline-offset:2px}
+  .lost-actions{display:flex;gap:8px}
+  .lost button{border:none;border-radius:999px;padding:8px 14px;font-weight:600;cursor:pointer;background:var(--court);color:#fff}
+  .lost button.ghost{background:transparent;color:var(--court)}
+  .guests{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+  .guest{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 6px 6px 12px;font-size:13px;font-weight:600;background:var(--ok);color:#fff;border:2px dashed rgba(255,255,255,.7)}
+  .guest.maybe{background:var(--maybe);color:#2b1d00;border-color:rgba(0,0,0,.25)}
+  .guest .tag{font-family:"JetBrains Mono",monospace;font-size:10px;opacity:.85;text-transform:uppercase;letter-spacing:.08em}
+  .guest button{border:none;background:rgba(0,0,0,.18);color:inherit;border-radius:999px;cursor:pointer;font-size:12px;padding:3px 8px}
+  .addguest{border:2px dashed #b8c2d1;background:transparent;color:var(--court);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer}
+  .guestform{display:inline-flex;gap:6px;align-items:center}
+  .guestform input{padding:6px 10px;border:1px solid #d6dbe3;border-radius:999px;font-size:13px;width:150px}
+  .guestform button{border:none;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;background:var(--court);color:#fff}
+  .guestform button.ghost{background:transparent;color:var(--muted)}
+  .more{display:block;margin:16px auto 0;padding:10px 18px;border-radius:999px;border:2px solid var(--court);background:#fff;color:var(--court);font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1><span class="ball"></span>Pádel de los viernes</h1>
+  <p>Marcá de antemano qué viernes podés, cuáles dudás y cuáles no.</p>
+</div></header>
+
+<main><div class="wrap">
+  <div class="panel">
+    <div class="legend">
+      <span><span class="dot" style="background:var(--ok)"></span><b>Disponible</b></span>
+      <span><span class="dot" style="background:var(--maybe)"></span><b>En duda</b></span>
+      <span><span class="dot" style="background:var(--no)"></span><b>No puedo</b></span>
+      <span><span class="dot" style="background:var(--none)"></span>Sin marcar</span>
+      <span><span class="dot" style="background:transparent;border:2px dashed var(--ok)"></span>Invitado comodín</span>
+    </div>
+    <div class="toolbar">
+      <label class="me">Soy
+        <select id="me"><option value="">— elegí tu nombre —</option></select>
+      </label>
+    </div>
+    <p class="note" id="hint">Cargando…</p>
+  </div>
+
+  <div id="list"></div>
+  <button class="more" id="more">Ver más viernes</button>
+</div></main>
+<div class="toast" id="toast"></div>
+<div class="savebar" id="savebar">
+  <span id="saveText"></span>
+  <span class="lost-actions"><button id="discardBtn" class="ghost">Descartar</button><button id="saveBtn">Guardar cambios</button></span>
+</div>
+<script>
+(function(){
+  const API = "/api/state";
+  const STATES = ["", "ok", "maybe", "no"];
+  const LABEL = {"":"—", ok:"Disponible", maybe:"En duda", no:"No puedo"};
+  const PLAYERS = ["Aba","Lucho","Martao","Rafa","Ruso","Tave"];
+  const MONTHS = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+  let saved = {marks:{}, guests:{}};   // lo que está guardado en el servidor
+  let drafts = {};                     // id -> valor nuevo, sin guardar
+  let loaded = false, saving = false, offline = false, weeks = 12, openForm = null;
+  let me = "";
+  try { me = localStorage.getItem("padel-me") || ""; } catch(e){}
+  try { drafts = JSON.parse(localStorage.getItem("padel-drafts")||"{}") || {}; } catch(e){ drafts = {}; }
+
+  const $ = id => document.getElementById(id);
+  const toast = (t, ms) => { const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"), ms||1800); };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const keyOf = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const persistDrafts = () => { try { localStorage.setItem("padel-drafts", JSON.stringify(drafts)); } catch(e){} };
+
+  function fridays(n){
+    const d = new Date(); d.setHours(0,0,0,0);
+    d.setDate(d.getDate() + (5 - d.getDay() + 7) % 7);
+    return Array.from({length:n}, (_,i)=>{ const x=new Date(d); x.setDate(d.getDate()+7*i); return x; });
+  }
+
+  // Valor guardado de una celda: "mark|fecha|jugador" o "guest|fecha|id"
+  function savedValue(id){
+    const [t,k,x] = id.split("|");
+    if (t==="mark") return (saved.marks[k]||{})[x] || "";
+    const g = (saved.guests[k]||{})[x]; return g ? JSON.stringify(g) : "";
+  }
+  function value(id){ return id in drafts ? drafts[id] : savedValue(id); }
+  function change(id, val){
+    if (val === savedValue(id)) delete drafts[id]; else drafts[id] = val;
+    persistDrafts(); render();
+  }
+  function guestsOf(k){
+    const out = {};
+    Object.entries(saved.guests[k]||{}).forEach(([gid,g])=>out[gid]=g);
+    Object.entries(drafts).forEach(([id,v])=>{ const [t,kk,gid]=id.split("|"); if (t==="guest" && kk===k){ if (v) out[gid]=JSON.parse(v); else delete out[gid]; } });
+    return out;
+  }
+
+  function renderMe(){
+    $("me").innerHTML = '<option value="">— elegí tu nombre —</option>' + PLAYERS.map((p,i)=>`<option value="${i}" ${String(i)===me?"selected":""}>${esc(p)}</option>`).join("");
+  }
+
+  function render(){
+    let html = "", lastMonth = -1;
+    const today = new Date(); today.setHours(0,0,0,0);
+    for (const d of fridays(weeks)){
+      const k = keyOf(d);
+      if (d.getMonth() !== lastMonth){ lastMonth = d.getMonth(); html += `<div class="month">${MONTHS[lastMonth]} ${d.getFullYear()}</div>`; }
+      let ok=0, maybe=0, no=0;
+      const marks = PLAYERS.map((_,i)=>value(`mark|${k}|${i}`));
+      marks.forEach(s=>{ if(s==="ok")ok++; else if(s==="maybe")maybe++; else if(s==="no")no++; });
+      const g = Object.entries(guestsOf(k));
+      g.forEach(([,x])=>{ if (x.s==="maybe") maybe++; else ok++; });
+      let cls="", status="";
+      if (ok>=4){ cls="go"; status=`Hay partido · ${ok} confirmados`; }
+      else if (ok+maybe>=4){ cls="risk"; status=`Depende de los dudosos · ${ok}+${maybe}`; }
+      else if (PLAYERS.length+g.length-no<4){ cls="off"; status=`No llegamos · ${no} no pueden`; }
+      else { status = `${ok} disponibles · faltan ${4-ok}`; }
+      html += `<div class="fri ${cls}"><div class="fri-head"><div class="date">Viernes ${d.getDate()}<small>${d.getTime()===today.getTime()?"hoy":MONTHS[d.getMonth()]}</small></div><span class="status">${status}</span></div><div class="chips">` +
+        PLAYERS.map((p,i)=>{
+          const id=`mark|${k}|${i}`, s=marks[i], mine=String(i)===me;
+          return `<button class="chip ${s} ${mine?"mine":"locked"} ${id in drafts?"draft":""}" data-k="${k}" data-i="${i}" title="${esc(p)}: ${LABEL[s]}"><span class="n">${esc(p)}</span><span class="s">${LABEL[s]}</span></button>`;
+        }).join("") + `</div><div class="guests">` +
+        g.map(([gid,x])=>`<span class="guest ${x.s==="maybe"?"maybe":""}" title="Invitado de ${esc(PLAYERS[x.by]||"")}"><span class="tag">Inv.</span>${esc(x.n)}<button data-act="gtoggle" data-k="${k}" data-g="${gid}">${x.s==="maybe"?"duda":"ok"}</button><button data-act="gdel" data-k="${k}" data-g="${gid}" aria-label="Quitar invitado">✕</button></span>`).join("") +
+        (openForm===k
+          ? `<form class="guestform" data-k="${k}"><input name="n" maxlength="20" placeholder="Nombre del invitado" autocomplete="off"><button>Sumar</button><button type="button" class="ghost" data-act="gcancel">Cancelar</button></form>`
+          : `<button class="addguest" data-act="gadd" data-k="${k}">+ Invitado comodín</button>`) +
+        `</div></div>`;
+    }
+    $("list").innerHTML = html;
+    if (openForm){ const f=$("list").querySelector(`form[data-k="${openForm}"] input`); if(f) f.focus(); }
+    $("hint").textContent = !loaded ? "Cargando…"
+      : offline ? "No se pudo conectar con el servidor. Lo que marques queda guardado en este dispositivo hasta que vuelva la conexión."
+      : me==="" ? "Elegí tu nombre arriba y después tocá tus casilleros para cambiar el estado. Se necesitan 4 disponibles para que haya partido."
+      : "Tocá tus casilleros para pasar de Disponible → En duda → No puedo → sin marcar, y después tocá Guardar cambios. Se necesitan 4 disponibles para que haya partido; si faltan, cualquiera puede sumar un invitado comodín.";
+    const n = Object.keys(drafts).length;
+    $("savebar").classList.toggle("show", n>0 || saving);
+    document.body.classList.toggle("hasbar", n>0 || saving);
+    $("saveText").textContent = saving ? "Guardando…" : `Tenés ${n} cambio${n===1?"":"s"} sin guardar`;
+    $("saveBtn").disabled = $("discardBtn").disabled = saving;
+  }
+
+  async function load(){
+    try {
+      const r = await fetch(API, {cache:"no-store"});
+      if (!r.ok) throw new Error(r.status);
+      saved = await r.json(); offline = false;
+      // descartar borradores que ya coinciden con lo guardado
+      Object.keys(drafts).forEach(id=>{ if (drafts[id]===savedValue(id)) delete drafts[id]; });
+      persistDrafts();
+    } catch(e){ offline = true; }
+    loaded = true;
+    if (!openForm) render();
+  }
+
+  async function save(){
+    const changes = Object.assign({}, drafts);
+    if (!Object.keys(changes).length || saving) return;
+    saving = true; render();
+    try {
+      const r = await fetch(API, {method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({changes})});
+      if (!r.ok) throw new Error(r.status);
+      saved = await r.json(); offline = false;
+      Object.keys(changes).forEach(id=>{ if (drafts[id]===changes[id]) delete drafts[id]; });
+      persistDrafts(); saving = false; render(); toast("✓ Cambios guardados", 2200);
+    } catch(e){
+      saving = false; render(); toast("No se pudo guardar. Revisá la conexión y probá de nuevo.", 3000);
+    }
+  }
+  function discard(){ drafts = {}; persistDrafts(); render(); toast("Cambios descartados"); }
+
+  function needMe(){ if (me===""){ toast("Primero elegí tu nombre arriba"); $("me").focus(); return true; } return false; }
+
+  $("list").addEventListener("submit", e=>{
+    e.preventDefault();
+    const f=e.target, k=f.dataset.k, inp=f.querySelector("input"), n=inp.value.trim();
+    if (!n){ inp.focus(); return; }
+    openForm = null;
+    const gid = Math.random().toString(36).slice(2,10);
+    change(`guest|${k}|${gid}`, JSON.stringify({n, s:"ok", by:+me}));
+  });
+  $("list").addEventListener("click", e=>{
+    const act = e.target.closest("[data-act]");
+    if (act){
+      const k = act.dataset.k, a = act.dataset.act, gid = act.dataset.g;
+      if (a==="gcancel"){ openForm=null; render(); return; }
+      if (needMe()) return;
+      if (a==="gadd"){ openForm=k; render(); return; }
+      const id = `guest|${k}|${gid}`, cur = value(id); if (!cur) return;
+      if (a==="gdel") change(id, "");
+      if (a==="gtoggle"){ const g=JSON.parse(cur); g.s = g.s==="maybe" ? "ok" : "maybe"; change(id, JSON.stringify(g)); }
+      return;
+    }
+    const b = e.target.closest(".chip"); if (!b) return;
+    if (needMe()) return;
+    if (b.dataset.i !== me){ toast("Solo podés marcar tus casilleros"); return; }
+    const id = `mark|${b.dataset.k}|${b.dataset.i}`;
+    change(id, STATES[(STATES.indexOf(value(id))+1) % STATES.length]);
+  });
+  $("me").addEventListener("change", e=>{ me=e.target.value; try{localStorage.setItem("padel-me",me);}catch(_){} render(); });
+  $("saveBtn").addEventListener("click", save);
+  $("discardBtn").addEventListener("click", discard);
+  $("more").addEventListener("click", ()=>{ weeks+=8; render(); });
+
+  // Se actualiza solo: cada 20 segundos y al volver a la pestaña
+  setInterval(()=>{ if (!saving && document.visibilityState==="visible") load(); }, 20000);
+  document.addEventListener("visibilitychange", ()=>{ if (document.visibilityState==="visible") load(); });
+
+  renderMe(); render(); load();
+})();
+</script>
+</body>
+</html>
