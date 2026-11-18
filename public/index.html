@@ -233,11 +233,15 @@
   // Ranking: chances de que se juegue cada viernes
   function level(r){
     const unk = r.unk; // jugadores fijos sin marcar
+    // Nadie puede: todos marcaron "no" y no hay invitados
+    if (r.no === PLAYERS.length && r.guests === 0) return {cls:"cancel", label:"Cancelado", score:-20};
     // Cancelado solo si faltan 2 o más aunque todos los pendientes digan que sí
     if (r.max <= 2) return {cls:"cancel", label:"Posiblemente cancelado", score:-10 + r.max};
     if (r.ok >= 4) return {cls:"alta", label:"Confirmado", score:100 + r.ok};
     if (r.ok + r.maybe >= 4) return {cls:"buena", label:"Buenas chances", score:50 + r.ok + r.maybe*.5};
     const score = r.ok + r.maybe*.5 + unk*.35 - r.no*.6;
+    // 3 confirmados y todavía hay jugadores sin marcar
+    if (r.ok === 3 && unk > 0) return {cls:"floja", label:"Invitar a alguien o pedir votar", score};
     // Invitar a alguien: falta uno (o un "no" más y ya no se llega a 4)
     if (r.max <= 4) return {cls:"floja", label:"Invitar a alguien", score};
     return {cls:"abierta", label:"Falta que marquen", score: 10 + score};
