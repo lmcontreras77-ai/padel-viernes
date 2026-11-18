@@ -262,7 +262,12 @@
     const list = rows.map(r=>{
       let lv = level(r);
       const days = Math.round((r.d - today) / 86400000);
-      if (lv.cls === "floja" && days >= 0 && days <= 6) lv = {...lv, cls:"urgente", label: lv.label + " ya mismo"};
+      const thisWeek = days >= 0 && days <= 6;
+      // "ya mismo" solo cuando ya votaron todos y aun así falta gente
+      if (thisWeek && lv.cls === "floja" && r.unk === 0) lv = {...lv, cls:"urgente", label: lv.label + " ya mismo"};
+      // Esta semana, si se llega a 4 solo con los que están en duda, hay que apurarlos
+      if (thisWeek && lv.cls === "buena" && r.maybe > 0)
+        lv = {...lv, cls:"urgente", label: r.maybe === 1 ? "Falta que confirme el que está en duda" : "Falta que confirmen los que están en duda"};
       return {r, lv};
     });
     $("rank").innerHTML = `<h2>Chances por viernes</h2><p class="sub">En orden de fecha, con las chances de que se juegue cada uno. Tocá uno para ir a ese viernes.</p>` +
