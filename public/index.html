@@ -234,11 +234,11 @@
   function level(r){
     const unk = r.unk; // jugadores fijos sin marcar
     if (r.max < 4) return {cls:"cancel", label:"Posiblemente cancelado", score:-10 + r.max};
-    if (r.ok >= 4) return {cls:"alta", label:"Altas chances", score:100 + r.ok};
+    if (r.ok >= 4) return {cls:"alta", label:"Confirmado", score:100 + r.ok};
     if (r.ok + r.maybe >= 4) return {cls:"buena", label:"Buenas chances", score:50 + r.ok + r.maybe*.5};
     const score = r.ok + r.maybe*.5 + unk*.35 - r.no*.6;
     // Difícil: un "no" más y ya no se llega a 4
-    if (r.max === 4) return {cls:"floja", label:"Difícil", score};
+    if (r.max === 4) return {cls:"floja", label:"Invitar a alguien", score};
     return {cls:"abierta", label:"Falta que marquen", score: 10 + score};
   }
   function chance(r, lv){
